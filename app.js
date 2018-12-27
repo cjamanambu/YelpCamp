@@ -1,43 +1,67 @@
-var express = require('express');
-var app = express();
-var bodyParser = require('body-parser')
+var express     = require('express'),
+    app         = express(),
+    bodyParser  = require('body-parser'),
+    mongoose    = require("mongoose"),
+    seedDB      = require("./seeds"),
+    Campground  = require("./models/campground");
 
-var campgrounds = [
-  {name: "Salmon Creek", image: "https://pixabay.com/get/e834b70c2cf5083ed1584d05fb1d4e97e07ee3d21cac104491f5c27da3ecbcbb_340.jpg"},
-  {name: "Granite Hill", image: "https://farm3.staticflickr.com/2116/2164766085_0229ac3f08.jpg"},
-  {name: "Mountain Goat's Rest", image: "https://pixabay.com/get/e136b60d2af51c22d2524518b7444795ea76e5d004b0144590f3c57da6e4b6_340.jpg"},
-  {name: "Salmon Creek", image: "https://pixabay.com/get/e834b70c2cf5083ed1584d05fb1d4e97e07ee3d21cac104491f5c27da3ecbcbb_340.jpg"},
-  {name: "Granite Hill", image: "https://farm3.staticflickr.com/2116/2164766085_0229ac3f08.jpg"},
-  {name: "Mountain Goat's Rest", image: "https://pixabay.com/get/e136b60d2af51c22d2524518b7444795ea76e5d004b0144590f3c57da6e4b6_340.jpg"},
-  {name: "Salmon Creek", image: "https://pixabay.com/get/e834b70c2cf5083ed1584d05fb1d4e97e07ee3d21cac104491f5c27da3ecbcbb_340.jpg"},
-  {name: "Granite Hill", image: "https://farm3.staticflickr.com/2116/2164766085_0229ac3f08.jpg"},
-  {name: "Mountain Goat's Rest", image: "https://pixabay.com/get/e136b60d2af51c22d2524518b7444795ea76e5d004b0144590f3c57da6e4b6_340.jpg"},
-  {name: "Salmon Creek", image: "https://pixabay.com/get/e834b70c2cf5083ed1584d05fb1d4e97e07ee3d21cac104491f5c27da3ecbcbb_340.jpg"},
-  {name: "Granite Hill", image: "https://farm3.staticflickr.com/2116/2164766085_0229ac3f08.jpg"},
-  {name: "Mountain Goat's Rest", image: "https://pixabay.com/get/e136b60d2af51c22d2524518b7444795ea76e5d004b0144590f3c57da6e4b6_340.jpg"}
-];
 
+mongoose.connect("mongodb://localhost:27017/yelp_camp", {useNewUrlParser: true});
 app.use(bodyParser.urlencoded({extended: true}));
 app.set('view engine', 'ejs');
+seedDB();
 
 app.get('/', function(req, res){
   res.render('landing');
 });
 
+// index route
 app.get('/campgrounds', function(req, res){
-  res.render('campgrounds', {campgrounds: campgrounds});
+  // get all campgrpunds from db
+  Campground.find({}, function(err, allCampgrounds){
+    if(err){
+      console.log(err);
+    }
+    else{
+      res.render("index", {campgrounds: allCampgrounds});
+    }
+  });
 });
 
+// create route
 app.post('/campgrounds', function(req, res){
   var name = req.body.name;
   var image = req.body.image;
-  var newCampground = {name: name, image: image}
-  campgrounds.push(newCampground);
-  res.redirect("/campgrounds");
+  var desc = req.body.description;
+  var newCampground = {name: name, image: image, description: desc};
+  // create a new campground and save to db
+  Campground.create(newCampground, function(err, newCreated){
+    if(err){
+      console.log(err);
+    }
+    else{
+      res.redirect("/campgrounds")
+    }
+  });
 });
 
+// new route
 app.get('/campgrounds/new', function(req, res){
   res.render('new.ejs');
+});
+
+// show route
+app.get("/campgrounds/:id", function(req, res){
+  //find the campground with that campground's id
+  Campground.findById(req.params.id).populate("comments").exec( function(err, foundCampground){
+    if(err){
+      console.log(err);
+    }
+    else{
+      console.log(foundCampground);
+      res.render("show", {campground: foundCampground});
+    }
+  });
 });
 
 const port = process.env.PORT || 5000;
