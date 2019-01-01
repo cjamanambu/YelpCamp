@@ -32,14 +32,14 @@ function seedDB(){
                console.log(err);
            }
            console.log("removed comments");
-           
+
            data.forEach(function(seed){
               Campground.create(seed, function(err, campground){
                  if(err){
                      console.log(err);
                  } else {
                      console.log("added a campground");
-                     
+
                      Comment.create(
                          {
                              text: "This place is great but I wish there was internet",
@@ -52,7 +52,7 @@ function seedDB(){
                                  campground.save();
                                  console.log("Created new comment");
                              }
-                         
+
                      });
                  }
               });
